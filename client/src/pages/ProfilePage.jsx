@@ -1,17 +1,33 @@
-import React, { useState } from 'react';
+import React, { useContext, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
 import assets from '../assets/assets';
+import { AuthContext } from '../../context/AuthContext';
 
 function ProfilePage() {
 
+  const {authUser, updateProfile} = useContext(AuthContext);
+
   const [selectedImage, setSelectedImage] = useState(null);
   const navigate = useNavigate();
-  const [name, setName] = useState('Martin Jhonson');
-  const [bio, setBio] = useState('Hi Everyone, I am Using QuickChat');
+  const [name, setName] = useState(authUser.fullName);
+  const [bio, setBio] = useState(authUser.bio);
+
 
   const handleSubmit = async (event) => {
     event.preventDefault();
-    navigate('/');
+    if (!selectedImage) {
+      await updateProfile({fullName: name, bio});
+      navigate('/');
+      return;
+    } 
+    const reader = new FileReader();
+    reader.readAsDataURL(selectedImage);
+    reader.onload = async () => {
+      const base64Image = reader.result;
+      await updateProfile({profilePic: base64Image, fullName: name, bio});
+      navigate('/');
+    }
+    
   }
 
   return (
@@ -32,7 +48,7 @@ function ProfilePage() {
           </button>
 
         </form>
-        <img src={assets.logo_icon} alt=""  className='max-w-44 aspect-square rounded-full mx-10 max-sm:mt-10'/>
+        <img src={authUser?.profilePic || assets.logo_icon} alt=""  className={`max-w-44 aspect-square rounded-full mx-10 max-sm:mt-10 ${selectedImage && 'rounded-full'}`}/>
       </div>
 
 
